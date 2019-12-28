@@ -2,7 +2,7 @@ import React, { Component } from 'react';
 import './App.css';
 
 import { Route, Switch, BrowserRouter } from 'react-router-dom'
-import { auth } from './firebase/firebase.utils';
+import { auth, createUserProfileDocument } from './firebase/firebase.utils';
 
 import Homepage from './pages/homepage/Homepage';
 import ShopPage from './pages/shop/shop';
@@ -22,10 +22,23 @@ class App extends Component {
   unsuscribeFromAuth = null;
 
   componentDidMount() {
-    this.unsuscribeFromAuth = auth.onAuthStateChanged(user => {
-      this.setState({ currentUser: user })
+    this.unsuscribeFromAuth = auth.onAuthStateChanged(async userAuth => {
+      if (userAuth) {
+        const userRef = await createUserProfileDocument(userAuth);
 
-      console.log(user);
+        userRef.onSnapshot(snapShot => {
+          this.setState({
+            currentUser: {
+              id: snapShot.id,
+              ...snapShot.data()
+            }
+          });
+
+          console.log(this.state)
+        })
+      } else {
+        this.setState({ currentUser: null });
+      }
     })
   }
 
